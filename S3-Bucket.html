@@ -4,6 +4,65 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>S3 Bucket</title>
+    <script>
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const fileInput = document.getElementById("inputFile");
+            const uploadButton = document.getElementById("uploadButton");
+            const fileTable = document.getElementById("fileTable");
+
+            async function fetchFiles() {
+                
+                try {
+                    const response= await fetch("http://localhost:3001/list",{
+                        method:"GET",
+                    });
+                    const fileList= await response.json();
+
+                    fileTable.innerHTML="";
+
+                    fileList.forEach(file =>{
+                        const row = document.createElement("tr");
+
+                        row.innerHTML=`
+                        <td>${file.name}</td>
+                        <td>${file.size}KB</td>`;
+                        fileTable.appendChild(row);
+                    });
+                } catch (error) {
+                    console.error("Error fetching File List:",error);
+                }
+            }
+            fetchFiles();
+
+            uploadButton.addEventListener("click", async function () {
+                const file = fileInput.files[0];
+
+                if (!file) {
+                    alert("Please Select Upload File First!");
+                    return;
+                }
+                const formData = new FormData();
+                formData.append("file", file);
+
+                try {
+                    const response = await fetch("http://localhost:3001/upload", {
+                        method: "POST",
+                        body: formData,
+                    });
+
+                    const result = await response.json();
+                    if (response.ok) {
+                        alert(`File Upload Successfully: ${result.fileName}`)
+                    } else {
+                        alert(`Upload failed: ${result.error}`);
+                    }
+                } catch (error) {
+                    alert("File upload error!");
+                }
+            });
+        });
+    </script>
 </head>
 
 <body>
@@ -11,11 +70,21 @@
     <h3>Store File in AWS S3 Bucket Using the JavaScript.</h3>
     <h2>Upload File.</h2>
     <input type="file" id="inputFile" />
-    <button
+    <button id="uploadButton"
         style="display: flex; margin-top: 20px; color: white; background-color: rgb(96, 238, 96); padding: 6px 120px; border: none; border-radius: 10px; font-size: 16px; font-weight: 600;">
-        Upload File</button>
+        Upload File
+    </button>
+    <br>
+    <hr>
+    <h2>Uploaded Files.</h2>
+    <table style="width: 20%;">
+        <tr>
+            <th>Name</th>
+            <th>Size</th>
+        </tr>
+        <tbody id="fileTable" style="padding-left: 20px;">
+        </tbody>
+    </table>
 </body>
-
-<Script src="S3-Client.js"></Script>
 
 </html>
