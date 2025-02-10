@@ -20,7 +20,7 @@ const BUCKET = process.env.BUCKET;
 app.post("/upload", (req, res) => {
 
   if (!req.files || !req.files.file) {  // Check if req.files and req.files.file exist
-    return res.status(400).send("No file uploaded.");
+    return res.status(400).json({ error: "No file uploaded" });
   }
 
   const file = req.files.file;
@@ -36,7 +36,7 @@ app.post("/upload", (req, res) => {
       return res.status(500).send("upload failed: " + err.message);
     } else {
       console.log("Direct Upload SuccessFully: ", data);
-      res.send("File Upload Successfully!" + data.Location);
+      res.json({ message: "File upload successfully", fileName: file.name });
     }
   });
 });
@@ -44,8 +44,12 @@ app.post("/upload", (req, res) => {
 app.get('/list', async (req, res) => {
   try {
     const read = await s3.listObjectsV2({ Bucket: BUCKET }).promise();
-    const R = read.Contents.map((item) => item.Key);
-    res.send(R);
+
+    const fileList = read.Contents.map((item) => ({
+      name: item.Key,
+      size: (item.Size / 1024).toFixed(2), // File size in KB. 
+    }));
+    res.json(fileList);
   } catch (error) {
     console.log("Error fetching S3 objects:", error);
     res.status(500).send("Error fetching S3 objects");
